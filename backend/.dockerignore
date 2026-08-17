@@ -1,0 +1,14 @@
+.git
+.gitignore
+.dockerignore
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.venv
+.pytest_cache
+.coverage
+htmlcov
+tests
+data/*.db
+!data/.gitkeep

@@ -1,0 +1,7 @@
+# Test-only dependencies. Install alongside requirements.txt:
+#   pip install -r requirements.txt -r requirements-dev.txt
+pytest==9.1.1
+pytest-asyncio==1.4.0
+pytest-cov==7.1.0
+# httpx itself is a runtime dependency (see requirements.txt); respx stubs it.
+respx==0.22.0

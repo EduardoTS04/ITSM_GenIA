@@ -1,0 +1,22 @@
+
+# Environment variables
+.env
+*.env
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+.pytest_cache/
+.coverage
+
+# Node.js
+node_modules/
+dist/
+
+# Database & local storage
+data/*.db
+!data/.gitkeep
+chroma_db/

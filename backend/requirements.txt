@@ -1,0 +1,10 @@
+fastapi
+uvicorn[standard]
+sqlalchemy
+# Schema migrations; see backend/MIGRATIONS.md
+alembic==1.19.1
+# Async HTTP client for the Ollama calls in app/agents/orchestrator.py
+httpx==0.28.1
+python-dotenv
+# >=2.3 for the NoDecode annotation used in app/core/config.py
+pydantic-settings>=2.3

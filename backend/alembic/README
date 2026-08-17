@@ -1,0 +1,4 @@
+Single-database Alembic configuration.
+
+The URL comes from app.core.config.settings (see env.py), not from alembic.ini.
+Commands and the procedure for adopting an existing database: ../MIGRATIONS.md
