@@ -4,9 +4,14 @@ Asistente local de gestión de servicios de TI: un usuario envía un título y u
 
 ## Capturas
 
-![Imagen 1](imagenes/hackatom_Prueba.jpg)
-
-![Imagen 2](imagenes/hackatom_Prueba2.jpg)
+<p align="center">
+  <a href="imagenes/hackatom_Prueba.jpg">
+    <img src="imagenes/hackatom_Prueba.jpg" width="400">
+  </a>
+  <a href="imagenes/hackatom_Prueba2.jpg">
+    <img src="imagenes/hackatom_Prueba2.jpg" width="400">
+  </a>
+</p>
 
 Esto es un MVP de hackathon, no un ITSM de producción multi-tenant. Lo que sigue es lo que el repositorio hace realmente hoy.
 
