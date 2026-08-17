@@ -1,4 +1,4 @@
-# ITSM GenIA (HACKATHON GENIA del programa trainee Talent Tech) - NTT DATA
+# ITSM GenIA (HACKATHON GenIA del programa trainee Talent Tech) - NTT DATA
 
 Asistente local de gestión de servicios de TI: un usuario envía un título y una descripción, un pipeline de cuatro agentes Ollama clasifica y prioriza el ticket, redacta una respuesta de soporte estructurada, y el resultado se guarda en SQLite. La UI es una consola React para listar, crear, comentar y escalar tickets.
 
