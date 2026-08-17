@@ -168,7 +168,7 @@ Cobertura de: `CreateTicketUseCase`, repositorios SQLAlchemy, revisiones de Alem
 - **SQLAlchemy síncrono en el event loop.** `POST /tickets` es `async`, pero los commits son síncronos.
 - **La observabilidad es delgada.** Las trazas se persisten con best-effort (un insert fallido no falla el ticket). `LOG_LEVEL` no se usa. No hay paquete de logging estructurado.
 - **Huecos del frontend.** Sin login, sin vista de trazas, sin tests automáticos de UI. El stage de producción de Docker copia `dist/` sin un paso `vite build`; Compose usa solo el target de desarrollo.
-- **Camino de arranque.** `app/main.py` siempre hace `os.makedirs("/app/data")`, que es la ruta del contenedor. Las ejecuciones locales en Windows pueden crear `C:\app\data` como efecto secundario.
+- **Camino de arranque.** El directorio de SQLite se crea a partir del padre de `DATABASE_URL`, no de una ruta fija `/app/data`.
 - **Librerías de runtime sin pin.** FastAPI, Uvicorn y SQLAlchemy no tienen versiones en `requirements.txt`.
 
 ## Hoja de ruta

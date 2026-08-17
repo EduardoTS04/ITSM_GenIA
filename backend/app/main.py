@@ -24,7 +24,7 @@ from app.domain.entities.agent_trace import AgentTrace
 # ── Bootstrap ──────────────────────────────────────────────────────────────────
 
 # Ensure the data directory exists (SQLite needs it)
-os.makedirs("data", exist_ok=True)
+# os.makedirs("data", exist_ok=True)
 
 # Alembic owns the schema: run `alembic upgrade head` before starting the app
 # (see backend/MIGRATIONS.md). The flag below is a dev-only shortcut for throwaway
