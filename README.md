@@ -2,6 +2,12 @@
 
 Asistente local de gestión de servicios de TI: un usuario envía un título y una descripción, un pipeline de cuatro agentes Ollama clasifica y prioriza el ticket, redacta una respuesta de soporte estructurada, y el resultado se guarda en SQLite. La UI es una consola React para listar, crear, comentar y escalar tickets.
 
+## Capturas
+
+![Imagen 1](imagenes/imagen1.png)
+
+![Imagen 2](imagenes/imagen2.png)
+
 Esto es un MVP de hackathon, no un ITSM de producción multi-tenant. Lo que sigue es lo que el repositorio hace realmente hoy.
 
 ## Arquitectura
