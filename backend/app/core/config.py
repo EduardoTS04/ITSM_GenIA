@@ -66,5 +66,15 @@ class Settings(BaseSettings):
             return [item.strip() for item in text.split(",") if item.strip()]
         return value
 
+    @field_validator("CORS_ALLOWED_ORIGINS")
+    @classmethod
+    def reject_wildcard_origins(cls, value: list[str]) -> list[str]:
+        """Wildcard origins are invalid with allow_credentials=True (see main.py)."""
+        if "*" in value:
+            raise ValueError(
+                "CORS_ALLOWED_ORIGINS cannot contain '*' when allow_credentials is True."
+            )
+        return value
+
 
 settings = Settings()

@@ -1,8 +1,6 @@
 import json
 from typing import Optional
-from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, Query
-from fastapi.responses import JSONResponse
 
 from app.application.use_cases.create_ticket import CreateTicketUseCase
 from app.domain.entities.ticket import Ticket
@@ -68,7 +66,7 @@ def to_ticket_out_dict(ticket: Ticket) -> dict:
 
 # ── POST /tickets ──────────────────────────────────────────────────────────────
 
-@router.post("/tickets", status_code=201)
+@router.post("/tickets", response_model=TicketOut, status_code=201)
 async def create_ticket(
     payload: TicketInput,
     use_case: CreateTicketUseCase = Depends(get_create_ticket_use_case),
@@ -78,15 +76,7 @@ async def create_ticket(
     The orchestrator fills in all remaining fields via the 4 AI agents.
     """
     ticket = await use_case.execute(titulo=payload.titulo, descripcion=payload.descripcion)
-
-    response_dict = to_ticket_out_dict(ticket)
-
-    # Serialize datetime fields manually for custom JSONResponse
-    for key, val in response_dict.items():
-        if isinstance(val, datetime):
-            response_dict[key] = val.isoformat()
-
-    return JSONResponse(content=response_dict, status_code=201)
+    return to_ticket_out_dict(ticket)
 
 
 # ── GET /tickets ───────────────────────────────────────────────────────────────

@@ -5,6 +5,7 @@ not change the outcome.
 """
 
 import pytest
+from pydantic import ValidationError
 
 from app.core.config import Settings, settings
 
@@ -96,8 +97,8 @@ def test_docker_compose_values_are_accepted(clean_env, monkeypatch):
 # ── CORS list parsing ──────────────────────────────────────────────────────────
 
 @pytest.mark.parametrize("raw,expected", [
-    ("*", ["*"]),
     ("http://localhost:5173", ["http://localhost:5173"]),
+    ("https://myapp.example.com", ["https://myapp.example.com"]),
     ("http://localhost:5173,https://itsm.example.com", ["http://localhost:5173", "https://itsm.example.com"]),
     (" http://a , http://b ", ["http://a", "http://b"]),
     ('["http://a", "http://b"]', ["http://a", "http://b"]),
@@ -106,6 +107,13 @@ def test_cors_origins_accept_comma_separated_and_json(clean_env, monkeypatch, ra
     monkeypatch.setenv("CORS_ALLOWED_ORIGINS", raw)
 
     assert Settings(_env_file=None).CORS_ALLOWED_ORIGINS == expected
+
+
+def test_cors_wildcard_is_rejected_at_settings_load(clean_env, monkeypatch):
+    monkeypatch.setenv("CORS_ALLOWED_ORIGINS", "*")
+
+    with pytest.raises(ValidationError, match="cannot contain '\\*'"):
+        Settings(_env_file=None)
 
 
 # ── Singleton ──────────────────────────────────────────────────────────────────
