@@ -1,12 +1,12 @@
 # ITSM GenIA
 
-Local IT service-management assistant: a user submits a title and description, a four-agent Ollama pipeline classifies and prioritizes the ticket, drafts a structured support answer, and the result is stored in SQLite. The UI is a React console for listing, creating, commenting on, and escalating tickets.
+Asistente local de gestión de servicios de TI: un usuario envía un título y una descripción, un pipeline de cuatro agentes Ollama clasifica y prioriza el ticket, redacta una respuesta de soporte estructurada, y el resultado se guarda en SQLite. La UI es una consola React para listar, crear, comentar y escalar tickets.
 
-This is a hackathon MVP, not a multi-tenant production ITSM. What follows is what the repository actually does today.
+Esto es un MVP de hackathon, no un ITSM de producción multi-tenant. Lo que sigue es lo que el repositorio hace realmente hoy.
 
-## Architecture
+## Arquitectura
 
-Request flow for ticket creation (the only path that goes through a use-case):
+Flujo de la petición para la creación de tickets (el único camino que pasa por un caso de uso):
 
 ```mermaid
 flowchart LR
@@ -26,59 +26,59 @@ flowchart LR
   ORCH --> OLLAMA["Ollama /api/chat"]
 ```
 
-Layers live under `backend/app/`: `presentation` (HTTP), `application` (use-cases), `domain` (entities and ports), `infrastructure` (SQLAlchemy and the Ollama adapter). Comments still query the session from the router; they do not go through a use-case.
+Las capas viven bajo `backend/app/`: `presentation` (HTTP), `application` (casos de uso), `domain` (entidades y puertos), `infrastructure` (SQLAlchemy y el adaptador de Ollama). Los comentarios siguen consultando la sesión desde el router; no pasan por un caso de uso.
 
-The four agents run **in sequence**: clasificador → priorizador → soporte → analítico. Later agents receive earlier JSON as context. Each call has a timeout, retries on connection/timeout errors, typed field fallbacks on failure, and a row in `agent_traces`.
+Los cuatro agentes se ejecutan **en secuencia**: clasificador → priorizador → soporte → analítico. Los agentes posteriores reciben el JSON anterior como contexto. Cada llamada tiene un timeout, reintentos ante errores de conexión/timeout, valores de respaldo tipados ante fallo, y una fila en `agent_traces`.
 
-More detail: [docs/architecture.md](docs/architecture.md). Why the split exists: [docs/adr/0001-clean-architecture-layering.md](docs/adr/0001-clean-architecture-layering.md). Why the pipeline is sequential: [docs/adr/0002-agent-orchestration-strategy.md](docs/adr/0002-agent-orchestration-strategy.md). Schema changes: [backend/MIGRATIONS.md](backend/MIGRATIONS.md).
+Más detalle: [docs/architecture.md](docs/architecture.md). Por qué existe la separación: [docs/adr/0001-clean-architecture-layering.md](docs/adr/0001-clean-architecture-layering.md). Por qué el pipeline es secuencial: [docs/adr/0002-agent-orchestration-strategy.md](docs/adr/0002-agent-orchestration-strategy.md). Cambios de esquema: [backend/MIGRATIONS.md](backend/MIGRATIONS.md).
 
-## Tech stack
+## Stack tecnológico
 
-Declared in the repo (unpinned packages have no version here on purpose):
+Declarado en el repo (los paquetes sin pin no tienen versión aquí a propósito):
 
-| Area | What is used |
+| Área | Qué se usa |
 | --- | --- |
 | API | Python 3.11, FastAPI, Uvicorn, Pydantic Settings ≥2.3 |
-| Persistence | SQLAlchemy, Alembic 1.19.1, SQLite |
-| LLM client | httpx 0.28.1 against a host Ollama (`llama3.2` by default) |
+| Persistencia | SQLAlchemy, Alembic 1.19.1, SQLite |
+| Cliente LLM | httpx 0.28.1 contra un Ollama en el host (`llama3.2` por defecto) |
 | Frontend | React 18.2, React Router 6.22, Axios 1.7, Vite 5, TypeScript 5.2 |
-| Tests / CI | pytest 9.1.1, pytest-asyncio, pytest-cov, respx 0.22.0; GitHub Actions for pytest and Gitleaks |
+| Tests / CI | pytest 9.1.1, pytest-asyncio, pytest-cov, respx 0.22.0; GitHub Actions para pytest y Gitleaks |
 
-Ollama is **not** a Compose service. It must already be running on the host.
+Ollama **no** es un servicio de Compose. Debe estar ya en ejecución en el host.
 
-## Setup
+## Configuración
 
-### Prerequisites
+### Requisitos previos
 
-- Docker with Compose
-- [Ollama](https://ollama.com) on the host, with the model the pipeline requests:
+- Docker con Compose
+- [Ollama](https://ollama.com) en el host, con el modelo que el pipeline solicita:
 
 ```bash
 ollama pull llama3.2
 ollama serve
 ```
 
-Confirm `http://localhost:11434` answers before starting the stack.
+Confirma que `http://localhost:11434` responde antes de arrancar el stack.
 
-### Docker (supported path)
+### Docker (camino soportado)
 
-From the repository root. Compose injects `DATABASE_URL` and `OLLAMA_BASE_URL`; you do not need a `.env` file for this path. The backend image runs `alembic upgrade head` before Uvicorn.
+Desde la raíz del repositorio. Compose inyecta `DATABASE_URL` y `OLLAMA_BASE_URL`; no necesitas un archivo `.env` para este camino. La imagen del backend ejecuta `alembic upgrade head` antes de Uvicorn.
 
 ```bash
 docker compose up --build
 ```
 
-- API: http://localhost:8000 — OpenAPI at http://localhost:8000/docs
+- API: http://localhost:8000 — OpenAPI en http://localhost:8000/docs
 - UI: http://localhost:5173
-- SQLite file: `data/itsm.db` (mounted into the container as `/app/data/itsm.db`)
+- Archivo SQLite: `data/itsm.db` (montado en el contenedor como `/app/data/itsm.db`)
 
-CORS defaults allow `http://localhost:5173` and `http://localhost:3000`. A `*` origin is rejected at startup because credentials are enabled.
+Los valores por defecto de CORS permiten `http://localhost:5173` y `http://localhost:3000`. Un origen `*` se rechaza al arrancar porque las credenciales están habilitadas.
 
-If `data/itsm.db` already existed **before** Alembic was introduced, do not recreate it. Stamp it first (see [backend/MIGRATIONS.md](backend/MIGRATIONS.md)); otherwise `alembic upgrade head` will fail with “table already exists”.
+Si `data/itsm.db` ya existía **antes** de que se introdujera Alembic, no lo recrees. Marca el stamp primero (véase [backend/MIGRATIONS.md](backend/MIGRATIONS.md)); de lo contrario `alembic upgrade head` fallará con “table already exists”.
 
-### Local Python / Node (optional)
+### Python / Node local (opcional)
 
-Use this when you are not using Compose. Copy env defaults, install, migrate, then start both processes:
+Usa esto cuando no estés usando Compose. Copia los valores por defecto de entorno, instala, migra y luego arranca ambos procesos:
 
 ```bash
 cp backend/.env.example backend/.env
@@ -99,40 +99,40 @@ npm install
 npm run dev
 ```
 
-`AUTO_CREATE_SCHEMA` in `.env.example` defaults to `false`. Leave it false; Alembic owns the schema. `LOG_LEVEL` is accepted by settings but is not wired into Python logging yet.
+`AUTO_CREATE_SCHEMA` en `.env.example` vale `false` por defecto. Déjalo en false; Alembic es dueño del esquema. `LOG_LEVEL` es aceptado por settings pero aún no está conectado al logging de Python.
 
 ## Demo
 
-1. Open http://localhost:5173 and create a ticket (title + description only).
-2. Wait for the four-agent run (up to 60s per Ollama call, with retries on timeouts).
-3. Open the ticket: structured steps, priority, category, comments, and “escalate to human” (`POST .../escalate`).
-4. Inspect the pipeline from a terminal:
+1. Abre http://localhost:5173 y crea un ticket (solo título + descripción).
+2. Espera la ejecución de los cuatro agentes (hasta 60s por llamada a Ollama, con reintentos ante timeouts).
+3. Abre el ticket: pasos estructurados, prioridad, categoría, comentarios y “escalar a humano” (`POST .../escalate`).
+4. Inspecciona el pipeline desde una terminal:
 
 ```bash
 curl -s http://localhost:8000/api/v1/tickets/1/trace
 ```
 
-The UI does not render traces today; the endpoint does.
+La UI no renderiza las trazas hoy; el endpoint sí.
 
-If Ollama is down, creation still returns **201** with the per-agent fallback values (for example tipo `incidente`, prioridad `P3`) and trace rows with `success: false`.
+Si Ollama está caído, la creación igual devuelve **201** con los valores de respaldo por agente (por ejemplo tipo `incidente`, prioridad `P3`) y filas de traza con `success: false`.
 
-## API reference
+## Referencia de la API
 
-Interactive docs: http://localhost:8000/docs
+Documentación interactiva: http://localhost:8000/docs
 
-Prefix: `/api/v1`
+Prefijo: `/api/v1`
 
-| Method | Path | Role |
+| Método | Ruta | Rol |
 | --- | --- | --- |
-| `POST` | `/tickets` | Create; runs the agent pipeline |
-| `GET` | `/tickets` | List; filters `q`, `fecha_desde`, `fecha_hasta`, `urgencia`, `tipo`, `categoria`, `prioridad`, `area_responsable` |
-| `GET` | `/tickets/{id}` | Fetch one |
-| `GET` | `/tickets/{id}/trace` | Four `AgentTrace` rows, oldest first |
-| `POST` | `/tickets/{id}/escalate` | Set `escalado_a_humano` |
-| `POST` | `/tickets/{id}/comments` | Add comment / optional 1–5 rating |
-| `GET` | `/tickets/{id}/comments` | Comments plus average rating |
-| `GET` | `/health` | Liveness HTML |
-| `GET` | `/` | JSON pointer to `/docs` and `/health` |
+| `POST` | `/tickets` | Crear; ejecuta el pipeline de agentes |
+| `GET` | `/tickets` | Listar; filtros `q`, `fecha_desde`, `fecha_hasta`, `urgencia`, `tipo`, `categoria`, `prioridad`, `area_responsable` |
+| `GET` | `/tickets/{id}` | Obtener uno |
+| `GET` | `/tickets/{id}/trace` | Cuatro filas `AgentTrace`, la más antigua primero |
+| `POST` | `/tickets/{id}/escalate` | Establece `escalado_a_humano` |
+| `POST` | `/tickets/{id}/comments` | Añadir comentario / valoración opcional 1–5 |
+| `GET` | `/tickets/{id}/comments` | Comentarios más valoración media |
+| `GET` | `/health` | HTML de liveness |
+| `GET` | `/` | Puntero JSON a `/docs` y `/health` |
 
 ```bash
 curl -s -X POST http://localhost:8000/api/v1/tickets \
@@ -147,7 +147,7 @@ http GET :8000/api/v1/tickets prioridad==P1
 
 ## Testing
 
-The suite mocks every Ollama HTTP call (respx) and uses throwaway SQLite files. It does not need a running Ollama or the real `data/itsm.db`.
+La suite mockea cada llamada HTTP a Ollama (respx) y usa archivos SQLite desechables. No necesita un Ollama en ejecución ni el `data/itsm.db` real.
 
 ```bash
 cd backend
@@ -155,30 +155,30 @@ pip install -r requirements.txt -r requirements-dev.txt
 pytest --cov=app --cov-report=term-missing
 ```
 
-Coverage of: `CreateTicketUseCase`, SQLAlchemy repositories, Alembic revisions, ticket/trace API, orchestrator retry/fallback, settings. There is no frontend test suite. Comments have no dedicated API tests. CI: `.github/workflows/backend-tests.yml` and `.github/workflows/secret-scan.yml`.
+Cobertura de: `CreateTicketUseCase`, repositorios SQLAlchemy, revisiones de Alembic, API de tickets/trazas, reintento/respaldo del orquestador, settings. No hay suite de tests de frontend. Los comentarios no tienen tests de API dedicados. CI: `.github/workflows/backend-tests.yml` y `.github/workflows/secret-scan.yml`.
 
-## Known limitations
+## Limitaciones conocidas
 
-- **SQLite only.** One file, one writer-friendly process, no Postgres/migrations-for-Postgres path.
-- **No authentication or authorization.** Every endpoint is open. CORS is an origin allow-list, not access control.
-- **Single instance.** No queue, no horizontal scaling, no multi-region story.
-- **Ollama on the host.** Compose does not start the model. A missing or slow model makes ticket creation take minutes (4 calls × timeout × retries).
-- **Sequential agents.** Clasificador output is required context for priorizador; soporte and analítico wait on both. Parallelism is not implemented.
-- **Partial layering.** Tickets and traces use ports/repositories. Comments still call `db.query(...)` in `comments.py`. List/get/escalate tickets have no use-case class.
-- **Sync SQLAlchemy on the event loop.** `POST /tickets` is `async`, but commits are synchronous.
-- **Observability is thin.** Traces persist best-effort (a failed insert does not fail the ticket). `LOG_LEVEL` is unused. No structured logging package.
-- **Frontend gaps.** No login, no trace view, no automated UI tests. The production Docker stage copies `dist/` without a `vite build` step; Compose uses the development target only.
-- **Startup path.** `app/main.py` always `os.makedirs("/app/data")`, which is the container path. Local Windows runs may create `C:\app\data` as a side effect.
-- **Unpinned runtime libs.** FastAPI, Uvicorn, and SQLAlchemy have no versions in `requirements.txt`.
+- **Solo SQLite.** Un archivo, un proceso amigable con un único escritor, sin Postgres ni un camino de migraciones para Postgres.
+- **Sin autenticación ni autorización.** Todos los endpoints están abiertos. CORS es una lista de orígenes permitidos, no control de acceso.
+- **Instancia única.** Sin cola, sin escalado horizontal, sin historia multi-región.
+- **Ollama en el host.** Compose no arranca el modelo. Un modelo ausente o lento hace que la creación de tickets tarde minutos (4 llamadas × timeout × reintentos).
+- **Agentes secuenciales.** La salida del clasificador es contexto requerido para el priorizador; soporte y analítico esperan a ambos. El paralelismo no está implementado.
+- **Capas parciales.** Tickets y trazas usan puertos/repositorios. Los comentarios siguen llamando `db.query(...)` en `comments.py`. Listar/obtener/escalar tickets no tienen clase de caso de uso.
+- **SQLAlchemy síncrono en el event loop.** `POST /tickets` es `async`, pero los commits son síncronos.
+- **La observabilidad es delgada.** Las trazas se persisten con best-effort (un insert fallido no falla el ticket). `LOG_LEVEL` no se usa. No hay paquete de logging estructurado.
+- **Huecos del frontend.** Sin login, sin vista de trazas, sin tests automáticos de UI. El stage de producción de Docker copia `dist/` sin un paso `vite build`; Compose usa solo el target de desarrollo.
+- **Camino de arranque.** `app/main.py` siempre hace `os.makedirs("/app/data")`, que es la ruta del contenedor. Las ejecuciones locales en Windows pueden crear `C:\app\data` como efecto secundario.
+- **Librerías de runtime sin pin.** FastAPI, Uvicorn y SQLAlchemy no tienen versiones en `requirements.txt`.
 
-## Roadmap
+## Hoja de ruta
 
-Not implemented. Next-phase work that follows from the gaps above:
+No implementado. Trabajo de la siguiente fase que se sigue de los huecos anteriores:
 
-- Move comments (and remaining ticket handlers) onto the same port / use-case pattern as create-ticket.
-- Optional parallel run of soporte and analítico after priorizador returns.
-- Async SQLAlchemy (or a threadpool) so LLM waits do not share the loop with blocking commits.
-- PostgreSQL as an optional `DATABASE_URL`, with Alembic covering both dialects.
-- Authentication on mutating routes.
-- Surface `GET /tickets/{id}/trace` in the ticket detail page.
-- Pin runtime dependencies and wire `LOG_LEVEL` into logging.
+- Mover comentarios (y los handlers de tickets restantes) al mismo patrón de puerto / caso de uso que create-ticket.
+- Ejecución paralela opcional de soporte y analítico después de que el priorizador responda.
+- SQLAlchemy asíncrono (o un threadpool) para que las esperas del LLM no compartan el loop con commits bloqueantes.
+- PostgreSQL como `DATABASE_URL` opcional, con Alembic cubriendo ambos dialectos.
+- Autenticación en las rutas que mutan.
+- Mostrar `GET /tickets/{id}/trace` en la página de detalle del ticket.
+- Fijar las dependencias de runtime y conectar `LOG_LEVEL` al logging.
